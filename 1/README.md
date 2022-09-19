@@ -20,7 +20,7 @@ The control plane's job is to manage and configure the sidecar proxies.
 
 Notice how we don't really need to change source code of the application.
 
-![service mesh with metrics representation](./assets/service-mesh-with-metrics.png)
+![service mesh with metrics representation](./assets/service-mesh-with-metrics.drawio.png)
 
 ## Why use a Service mesh?
 
@@ -28,7 +28,7 @@ Notice how we don't really need to change source code of the application.
 
 Imagine that you have a ton of services connected between them and they are exchanging information in a non-secure manner. Instead of having to generate TLS certificates for each of the services, handle _Authentication_ and _Authorization_, we can just create a service mesh and encrypt the traffic between the sidecar proxies. Example:
 
-![service mesh with security representation](./assets/service-mesh-with-security.png)
+![service mesh with security representation](./assets/service-mesh-with-security.drawio.png)
 
 ### Observability
 
@@ -45,7 +45,7 @@ Building reliable distributed systems means reducing failure where possible and 
 - Canary deployment
 - It is useful when the developer team has to migrate an app from monolith to microservices (for example), because the sidecar proxy can route where the request goes.
 
-![service mesh with traffic control representation](./assets/service-mesh-with-traffic-control.png)
+![service mesh with traffic control representation](./assets/service-mesh-with-traffic-control.drawio.png)
 
 ### Conclusion
 
