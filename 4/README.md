@@ -23,6 +23,14 @@ service {
 
 ![consul architecture with envoy](./assets/consul_envoy_architecture.drawio.png)
 
+## Installation
+
+Go to this [folder](./vm) and run `vagrant up`. It will try to get up and running a virtualbox machine, so you need to have virtualbox installed.
+
+## Verification
+
+Go [here](http://192.168.56.30:6060/index) and check that you can see a table with some "users" (This is not a lab about big data, so don't care about it).
+
 ## Purpose
 
 The purpose of this lab is to get hands on with Consul and be familiar with it. We are exposing each of the services in a static manner and configuring it to Cosul on the same manner, so it is no so challenging to Consul to discover that services. In chapter 5, we are going to discover dynamically services using a Consul client... Stay tunned.
