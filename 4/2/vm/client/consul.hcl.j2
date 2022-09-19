@@ -1,0 +1,10 @@
+datacenter  = "myhome"
+data_dir    = "/opt/consul"
+node_name   = "{{ ansible_hostname }}"
+log_level   = "INFO"
+server      = false
+client_addr = "0.0.0.0"
+bind_addr   = "{{ '{{' }}GetInterfaceIP \"eth1\"{{ '}}' }}"
+retry_join  = [
+  "192.168.56.30"
+]
