@@ -1,0 +1,19 @@
+[Unit]
+Description = "Frontend service"
+
+# The service requires the VM's network
+# to be configured. More info here: https://www.freedesktop.org/wiki/Software/systemd/NetworkTarget/
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/frontend
+Restart=on-failure
+Environment=PORT=6060
+Environment=BACKEND_URL=http://localhost:6050
+Environment=TEMPLATE_FOLDER=/usr/local/bin/
+
+# The Install section configures this service to start automatically if the VM reboots.
+[Install]
+WantedBy=multi-user.target
+

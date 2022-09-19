@@ -1,0 +1,20 @@
+version: '3.9'
+services:
+  frontend:
+    image: frontend:0.0.1
+    build:
+      context: ../services/frontend
+      dockerfile: Dockerfile
+    environment:
+    - "PORT=6060"
+    - "BACKEND_URL=http://backend:6061"
+    ports:
+    - "127.0.0.1:6060:6060"
+  backend:
+    image: backend:0.0.1
+    build:
+      context: ../services/backend
+      dockerfile: Dockerfile
+    environment:
+    - "PORT=6061"
+  

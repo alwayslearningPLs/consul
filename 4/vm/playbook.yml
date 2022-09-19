@@ -1,0 +1,87 @@
+---
+- hosts: all
+  become: yes
+  become_user: root
+  become_method: sudo
+  roles:
+  - role: gantsign.golang
+    golang_version: '1.19.1'
+    golang_mirror: 'https://storage.googleapis.com/golang'
+    golang_install_dir: /usr/local/bin/go
+    golang_path: '$HOME/go'
+  tasks:
+  - name: Prerequisites
+    ansible.builtin.apt:
+      name:
+      - curl
+      - gnupg2
+      - apt-transport-https
+      state: present
+  - name: Add gpg key of hashicorp
+    ansible.builtin.apt_key:
+      url: https://apt.releases.hashicorp.com/gpg
+      state: present 
+  - name: Add hashicorp
+    ansible.builtin.apt_repository:
+      repo: deb [arch=amd64] https://apt.releases.hashicorp.com jammy main
+      state: present
+  - name: Install consul and other important tools
+    ansible.builtin.apt:
+      name:
+      - consul
+      - make
+      - jq
+      - lsb-release
+      - net-tools
+      - curl
+      state: present
+      update_cache: yes
+  - name: Install envoy
+    ansible.builtin.shell: |
+      curl -L https://func-e.io/install.sh | bash -s -- -b /usr/local/bin
+      func-e use $ENVOY_VERSION_STRING
+      cp ~/.func-e/versions/$ENVOY_VERSION_STRING/bin/envoy /usr/local/bin/
+      envoy --version
+    environment:
+    - ENVOY_VERSION_STRING: "1.23.0"
+  - name: Copy server.hcl to machine
+    ansible.builtin.copy:
+      src: ./server.hcl
+      dest: /etc/consul.d/server.hcl
+  - name: System enable consul
+    ansible.builtin.systemd:
+      name: consul
+      enabled: yes
+      state: restarted
+  - name: Copy projects to vm
+    ansible.builtin.copy:
+      src: "../services/{{item}}"
+      dest: /home/vagrant/
+    loop:
+    - frontend
+    - backend
+  - name: Makefile each of the services
+    ansible.builtin.command:
+      cmd: make all
+      chdir: "{{item}}"
+    loop:
+    - /home/vagrant/frontend
+    - /home/vagrant/backend
+    environment:
+    - PATH: "/usr/local/bin/go/bin:{{ ansible_env.PATH }}"
+  - name: Copy consul service
+    ansible.builtin.copy:
+      src: ./consul.service
+      dest: /lib/systemd/system/consul.service
+  - name: System enable frontend and backend
+    ansible.builtin.systemd:
+      name: "{{item}}"
+      enabled: yes
+      state: restarted
+    loop:
+    - frontend.service
+    - frontend-sidecar-proxy.service
+    - backend.service
+    - backend-sidecar-proxy.service
+    - consul.service
+

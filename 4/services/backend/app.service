@@ -1,0 +1,17 @@
+[Unit]
+Description = "Backend service"
+
+# The service requires the VM's network
+# to be configured. More info here: https://www.freedesktop.org/wiki/Software/systemd/NetworkTarget/
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/backend
+Restart=on-failure
+Environment=PORT=6061
+
+# The Install section configures this service to start automatically if the VM reboots.
+[Install]
+WantedBy=multi-user.target
+

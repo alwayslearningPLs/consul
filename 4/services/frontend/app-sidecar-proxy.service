@@ -1,0 +1,16 @@
+[Unit]
+Description = "Frontend sidecar proxy"
+
+# The service requires the VM's network
+# to be configured. More info here: https://www.freedesktop.org/wiki/Software/systemd/NetworkTarget/
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/consul connect envoy -sidecar-for frontend -admin-bind 127.0.0.1:19000
+Restart=on-failure
+
+# The Install section configures this service to start automatically if the VM reboots.
+[Install]
+WantedBy=multi-user.target
+
