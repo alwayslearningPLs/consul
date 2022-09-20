@@ -1,0 +1,15 @@
+service {
+  name = "web"
+  port = {{ service_port }}
+
+  tags = [
+    "server",
+    "web"
+  ]
+
+  connect {
+    sidecar_service {
+      port = {{ sidecar_service_port }}
+    }
+  }
+}

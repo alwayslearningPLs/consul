@@ -1,0 +1,67 @@
+---
+- hosts: all
+  become: yes
+  become_user: root
+  become_method: sudo
+  tasks:
+  - name: Prerequisites
+    ansible.builtin.apt:
+      name:
+      - curl
+      - gnupg2
+      - apt-transport-https
+      state: present
+  - name: Add gpg key of hashicorp
+    ansible.builtin.apt_key:
+      url: https://apt.releases.hashicorp.com/gpg
+      state: present 
+  - name: Add hashicorp
+    ansible.builtin.apt_repository:
+      repo: deb [arch=amd64] https://apt.releases.hashicorp.com jammy main
+      state: present
+  - name: Install consul and other important tools
+    ansible.builtin.apt:
+      name:
+      - consul
+      - nginx
+      - make
+      - jq
+      - lsb-release
+      - net-tools
+      state: present
+      update_cache: yes
+  - name: Install envoy
+    ansible.builtin.shell: |
+      curl -L https://func-e.io/install.sh | bash -s -- -b /usr/local/bin
+      func-e use $ENVOY_VERSION_STRING
+      cp ~/.func-e/versions/$ENVOY_VERSION_STRING/bin/envoy /usr/local/bin/
+      envoy --version
+    environment:
+    - ENVOY_VERSION_STRING: "1.23.0"
+  - name: Read key from cluster
+    ansible.builtin.shell: cat ../cluster/encrypt_file
+    register: encrypt_output
+    delegate_to: localhost
+    become: no
+  - set_fact:
+      encrypt: "{{ encrypt_output.stdout }}"
+  - name: Copy files to VM
+    ansible.builtin.template:
+      src: "{{ item.src }}"
+      dest: "{{ item.dest }}"
+    loop:
+    - { src: './consul.hcl.j2', dest: '/etc/consul.d/consul.hcl' }
+    - { src: './consul.service', dest: '/etc/systemd/system/consul.service' }
+    - { src: './app.hcl.j2', dest: '/etc/consul.d/nginx.hcl' }
+    - { src: './app-sidecar-proxy.service.j2', dest: '/etc/systemd/system/sidecar-proxy.service' }
+    - { src: './nginx.conf.j2', dest: '/etc/nginx/nginx.conf' }
+  - name: Reload consul
+    ansible.builtin.systemd:
+      name: "{{ item }}" 
+      state: restarted
+      enabled: yes
+    loop:
+    - nginx.service
+    - sidecar-proxy.service
+    - consul.service
+

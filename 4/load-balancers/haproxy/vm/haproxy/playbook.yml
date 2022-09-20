@@ -1,0 +1,32 @@
+---
+- hosts: all
+  become: yes
+  become_user: root
+  become_method: sudo
+  tasks:
+  - name: Add dependencies
+    ansible.builtin.apt:
+      name:
+      - software-properties-common
+      state: present
+      update_cache: yes
+  - name: Add ppa repository of HAProxy
+    ansible.builtin.apt_repository:
+      repo: 'ppa:vbernat/haproxy-2.6'
+      state: present
+  - name: Install haproxy and haproxy-doc
+    ansible.builtin.apt:
+      name:
+      - haproxy-doc
+      - haproxy=2.6.5-1ppa1~jammy
+      state: present
+      update_cache: yes
+  - name: Copy haproxy configuration to VM
+    ansible.builtin.copy:
+      src: ./haproxy.cfg
+      dest: /etc/haproxy/haproxy.cfg
+  - name: System enable haproxy
+    ansible.builtin.systemd:
+      name: haproxy
+      state: restarted
+      enabled: yes
