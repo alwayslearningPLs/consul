@@ -4,7 +4,7 @@ Requires=network-online.target
 After=network-online.target
 
 [Service]
-ExecStart=/usr/bin/consul connect envoy -sidecar-for backend -admin-bind 127.0.0.1:{{ sidecar_proxy_port }}
+ExecStart=/usr/bin/consul connect envoy -sidecar-for web -admin-bind 127.0.0.1:{{ sidecar_proxy_port }}
 Restart=on-failure
 
 # The Install section configures this service to start automatically if the VM reboots.
