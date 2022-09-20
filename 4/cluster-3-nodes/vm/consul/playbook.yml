@@ -1,0 +1,76 @@
+---
+- hosts: all
+  become: yes
+  become_user: root
+  become_method: sudo
+  tasks:
+  - name: Prerequisites
+    ansible.builtin.apt:
+      name:
+      - curl
+      - gnupg2
+      - apt-transport-https
+      state: present
+  - name: Add gpg key of hashicorp
+    ansible.builtin.apt_key:
+      url: https://apt.releases.hashicorp.com/gpg
+      state: present 
+  - name: Add hashicorp
+    ansible.builtin.apt_repository:
+      repo: deb [arch=amd64] https://apt.releases.hashicorp.com jammy main
+      state: present
+  - name: Install consul and other important tools
+    ansible.builtin.apt:
+      name:
+      - consul
+      - make
+      - jq
+      - lsb-release
+      - net-tools
+      - curl
+      state: present
+      update_cache: yes
+  - name: Install envoy
+    ansible.builtin.shell: |
+      curl -L https://func-e.io/install.sh | bash -s -- -b /usr/local/bin
+      func-e use $ENVOY_VERSION_STRING
+      cp ~/.func-e/versions/$ENVOY_VERSION_STRING/bin/envoy /usr/local/bin/
+      envoy --version
+    environment:
+    - ENVOY_VERSION_STRING: "1.23.0"
+  - name: generate key with consul (only leader)
+    ansible.builtin.shell: consul keygen
+    register: encrypt_output
+    when: leader == 0
+  - set_fact:
+      encrypt: "{{ encrypt_output.stdout }}"
+    when: leader == 0
+  - name: cat encrypt file to variable (only slaves)
+    ansible.builtin.shell: cat ./encrypt_file
+    delegate_to: localhost
+    become: no
+    register: encrypt_output
+    when: leader > 0
+  - set_fact:
+      encrypt: "{{ encrypt_output.stdout }}"
+    when: leader > 0
+  - name: copy content of encrypt output to file localhost (only leader)
+    delegate_to: localhost
+    ansible.builtin.copy:
+      content: "{{ encrypt }}"
+      dest: ./encrypt_file
+    when: leader == 0
+    become: no
+  - name: Copy server.hcl to machine
+    ansible.builtin.template:
+      src: "{{ item.src }}"
+      dest: "{{ item.dest }}"
+    loop:
+    - { src: './server.hcl.j2', dest: '/etc/consul.d/server.hcl' }
+    - { src: './consul.service', dest: '/etc/systemd/system/consul.service' }
+  - name: System enable frontend and backend
+    ansible.builtin.systemd:
+      name: consul.service
+      enabled: yes
+      state: restarted
+
