@@ -1,0 +1,12 @@
+[Unit]
+Description = "Backend sidecar proxy"
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/consul connect envoy -sidecar-for backend -admin-bind 127.0.0.1:19001
+Restart=on-failure
+
+# The Install section configures this service to start automatically if the VM reboots.
+[Install]
+WantedBy=multi-user.target

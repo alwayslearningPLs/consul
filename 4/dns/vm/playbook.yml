@@ -1,0 +1,87 @@
+---
+- hosts: all
+  become: yes
+  become_user: root
+  become_method: sudo
+  tasks:
+  - name: Prerequisites
+    ansible.builtin.apt:
+      name:
+      - curl
+      - gnupg2
+      - apt-transport-https
+      state: present
+  - name: Add gpg key of hashicorp
+    ansible.builtin.apt_key:
+      url: https://apt.releases.hashicorp.com/gpg
+      state: present 
+  - name: Add gpg key of nginx
+    ansible.builtin.apt_key:
+      keyserver: keyserver.ubuntu.com
+      id: ABF5BD827BD9BF62
+      keyring: /usr/share/keyrings/ubuntu-nginx.gpg
+  - name: Add hashicorp and nginx repository
+    ansible.builtin.apt_repository:
+      repo: "{{ item }}"
+      state: present
+    loop:
+    - deb [arch=amd64] https://apt.releases.hashicorp.com jammy main
+    - deb [arch=amd64 signed-by=/usr/share/keyrings/ubuntu-nginx.gpg] https://nginx.org/packages/ubuntu jammy nginx
+  - name: Install consul and other important tools
+    ansible.builtin.apt:
+      name:
+      - consul
+      - nginx
+      - make
+      - jq
+      - lsb-release
+      - net-tools
+      - curl
+      state: present
+      update_cache: yes
+  - name: Install envoy
+    ansible.builtin.shell: |
+      curl -L https://func-e.io/install.sh | bash -s -- -b /usr/local/bin
+      func-e use $ENVOY_VERSION_STRING
+      cp ~/.func-e/versions/$ENVOY_VERSION_STRING/bin/envoy /usr/local/bin/
+      envoy --version
+    environment:
+    - ENVOY_VERSION_STRING: "1.23.0"
+  - name: Copy server.hcl to machine
+    ansible.builtin.template:
+      src: ./server.hcl.j2
+      dest: /etc/consul.d/server.hcl
+  - name: System enable consul
+    ansible.builtin.systemd:
+      name: consul
+      enabled: yes
+      state: restarted
+  - name: Copy projects to vm
+    ansible.builtin.copy:
+      src: "../services/{{item}}"
+      dest: /home/vagrant/
+    loop:
+    - backend
+    - gateway
+  - name: Makefile each of the services
+    ansible.builtin.command:
+      cmd: make all
+      chdir: "{{item}}"
+    loop:
+    - /home/vagrant/backend
+    - /home/vagrant/gateway
+  - name: Copy consul service
+    ansible.builtin.copy:
+      src: ./consul.service
+      dest: /lib/systemd/system/consul.service
+  - name: System enable frontend and backend
+    ansible.builtin.systemd:
+      name: "{{item}}"
+      enabled: yes
+      state: restarted
+    loop:
+    - ingress-gateway.service
+    - nginx.service
+    - nginx-sidecar-proxy.service
+    - consul.service
+

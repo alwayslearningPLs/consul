@@ -1,0 +1,28 @@
+datacenter        = "myhome"
+node_name         = "kitchen"
+data_dir          = "/opt/consul"
+bootstrap_expect  = 1
+
+domain            = "{{ domain }}"
+log_level         = "INFO"
+server            = true
+client_addr       = "0.0.0.0"
+bind_addr         = "{{'{{'}} GetInterfaceIP \"eth1\" {{'}}'}}"
+
+ports {
+  grpc            = 8502
+  dns             = 8600
+}
+
+connect {
+  enabled         = true
+}
+
+ui_config {
+  enabled         = true
+}
+
+dns_config {
+  allow_stale     = true
+  max_stale       = "87600h"
+}
