@@ -1,0 +1,27 @@
+version: '3.9'
+services:
+  server:
+    image: consul-server:0.1
+    build:
+      context: ./consul/server
+      dockerfile: Dockerfile
+    networks:
+    - consul-net
+    volumes:
+    - ./consul/server/consul.hcl:/etc/consul.d/server.hcl
+  client:
+    image: consul-client:0.1
+    build:
+      context: ./consul/client
+      dockerfile: Dockerfile
+    networks:
+    - consul-net
+    volumes:
+    - ./consul/client/consul.hcl:/etc/consul.d/server.hcl
+    depends_on:
+    - server
+networks:
+  consul-net:
+    name: consul-net
+    external: false
+
