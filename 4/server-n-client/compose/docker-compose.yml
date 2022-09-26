@@ -5,22 +5,35 @@ services:
     build:
       context: ./consul/server
       dockerfile: Dockerfile
-    networks:
-    - consul-net
     ports:
     - "8500:8500"
     - "8600:8600"
+    networks:
+    - consul-net
     volumes:
     - ./consul/server/consul.hcl:/etc/consul.d/server.hcl
-  client:
+  client0:
     image: consul-client:0.1
+    hostname: client0
     build:
       context: ./consul/client
       dockerfile: Dockerfile
     networks:
     - consul-net
     volumes:
-    - ./consul/client/consul.hcl:/etc/consul.d/server.hcl
+    - ./consul/client/consul0.hcl:/etc/consul.d/server.hcl
+    depends_on:
+    - server
+  client1:
+    image: consul-client:0.1
+    hostname: client1
+    build:
+      context: ./consul/client
+      dockerfile: Dockerfile
+    networks:
+    - consul-net
+    volumes:
+    - ./consul/client/consul1.hcl:/etc/consul.d/server.hcl
     depends_on:
     - server
 networks:

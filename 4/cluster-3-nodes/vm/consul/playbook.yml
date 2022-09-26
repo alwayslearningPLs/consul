@@ -27,7 +27,6 @@
       - jq
       - lsb-release
       - net-tools
-      - curl
       state: present
       update_cache: yes
   - name: Install envoy
