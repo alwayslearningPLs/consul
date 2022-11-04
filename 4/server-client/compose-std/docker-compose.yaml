@@ -1,0 +1,35 @@
+version: '3.9'
+services:
+  server:
+    image: consul:latest
+    networks:
+      - consul-net
+    ports:
+      - "8600:8600"
+      - "8500:8500"
+    volumes:
+      - ./consul-server.hcl:/consul/config/consul.hcl
+      - server-data:/consul/data
+    command: agent --config-dir=/consul/config
+  client:
+    image: consul:latest
+    networks:
+      - consul-net
+    volumes:
+      - ./consul-client.hcl:/consul/config/consul.hcl
+      - ./service/consul-service.hcl:/consul/config/consul-service.hcl
+      - client-data:/consul/data
+    command: agent --config-dir=/consul/config
+    depends_on:
+      - server
+  myserver:
+    image: myserver:0.1
+    networks:
+      - consul-net
+    environment:
+      - PORT=5000
+networks:
+  consul-net:
+volumes:
+  server-data:
+  client-data:
